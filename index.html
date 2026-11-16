@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10172b">
+  <title>AI, Automation &amp; the Future of Work — Module 13</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10172b;
+      --panel: #18223b;
+      --panel-light: #202c49;
+      --text: #f3f5ff;
+      --muted: #b7c1d9;
+      --accent: #73e0c1;
+      --accent-2: #97a8ff;
+      --line: rgba(215, 225, 255, .15);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button { font: inherit; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      background:
+        radial-gradient(ellipse at 12% 8%, rgba(115, 224, 193, .09), transparent 34rem),
+        radial-gradient(ellipse at 92% 90%, rgba(151, 168, 255, .11), transparent 35rem),
+        var(--bg);
+    }
+
+    .topbar, .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem clamp(1rem, 4vw, 3.5rem);
+    }
+
+    .topbar { flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: .75rem; font-size: .9rem; font-weight: 700; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: .65rem;
+      color: var(--bg);
+      background: var(--accent);
+      font-weight: 900;
+    }
+    .top-hint, .counter { color: var(--muted); font-size: .85rem; }
+    .timeline {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      width: 100%;
+      padding-top: .15rem;
+    }
+    .timeline-line, .timeline-progress {
+      position: absolute;
+      top: .68rem;
+      left: 10%;
+      height: 2px;
+      border-radius: 2px;
+    }
+    .timeline-line { right: 10%; background: var(--line); }
+    .timeline-progress { width: 0; background: var(--accent); transition: width .25s ease; }
+    .timeline-item {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      align-items: center;
+      gap: .45rem;
+      padding: 0 .25rem;
+      border: 0;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      text-align: center;
+      font-size: .76rem;
+      line-height: 1.25;
+    }
+    .timeline-marker {
+      display: grid;
+      place-items: center;
+      width: 1.45rem;
+      height: 1.45rem;
+      border: 2px solid #53607c;
+      border-radius: 50%;
+      color: var(--muted);
+      background: var(--bg);
+      font-size: .68rem;
+      font-weight: 800;
+      transition: border-color .2s, color .2s, background .2s;
+    }
+    .timeline-item:hover .timeline-marker,
+    .timeline-item:focus-visible .timeline-marker { border-color: var(--accent); }
+    .timeline-item:focus-visible { outline: none; }
+    .timeline-item:focus-visible .timeline-label { color: var(--text); }
+    .timeline-item[aria-current="step"] { color: var(--text); font-weight: 700; }
+    .timeline-item[aria-current="step"] .timeline-marker,
+    .timeline-item.completed .timeline-marker {
+      border-color: var(--accent);
+      color: var(--bg);
+      background: var(--accent);
+    }
+
+    main {
+      display: grid;
+      place-items: center;
+      padding: clamp(1rem, 4vw, 3rem);
+    }
+
+    .deck {
+      position: relative;
+      width: min(100%, 1100px);
+      height: min(70vh, 690px);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 1.5rem;
+      background: linear-gradient(145deg, rgba(24, 34, 59, .98), rgba(19, 28, 49, .98));
+      box-shadow: 0 2rem 6rem rgba(0, 0, 0, .28);
+    }
+
+    .slide {
+      display: none;
+      height: 100%;
+      min-height: 0;
+      overflow-y: auto;
+      padding: clamp(2rem, 7vw, 5.5rem);
+      animation: enter .32s ease both;
+    }
+    .slide.active { display: flex; flex-direction: column; justify-content: center; }
+    @keyframes enter { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+
+    .eyebrow {
+      margin: 0 0 1rem;
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 850px; margin-bottom: 1.1rem; font-size: clamp(2.6rem, 7.5vw, 5.8rem); line-height: .99; letter-spacing: -.055em; }
+    h2 { margin-bottom: 1rem; font-size: clamp(2rem, 5vw, 3.7rem); line-height: 1.05; letter-spacing: -.04em; }
+    h3 { margin-bottom: .6rem; font-size: 1.1rem; }
+    .lead { max-width: 780px; color: var(--muted); font-size: clamp(1.05rem, 2vw, 1.35rem); line-height: 1.65; }
+    .presenter { margin-top: 2rem; color: var(--muted); font-size: 1.05rem; }
+    .presenter strong { color: var(--text); }
+
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.2rem; }
+    .card, .example, .callout {
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, .035);
+    }
+    .card { padding: 1.2rem; }
+    .card p, .example p, .callout p, .bullet-list { margin-bottom: 0; color: var(--muted); line-height: 1.65; }
+    .example { margin-top: 1.25rem; padding: 1.15rem 1.3rem; border-left: 3px solid var(--accent); }
+    .example strong { color: var(--accent); }
+    .callout { margin-top: 1.2rem; padding: 1rem 1.2rem; color: var(--muted); line-height: 1.65; }
+    .callout strong { color: var(--text); }
+    .intro-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(300px, .95fr);
+      align-items: stretch;
+      gap: 1rem;
+      margin-top: .35rem;
+    }
+    .intro-explanation { display: flex; flex-direction: column; justify-content: center; }
+    .intro-explanation .example { margin-top: 0; }
+    .discussion-preview {
+      padding: 1.1rem;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, .035);
+    }
+    .discussion-preview h3 { color: var(--accent); }
+    .discussion-list { display: grid; gap: .7rem; margin: 0; padding: 0; list-style: none; }
+    .discussion-list li {
+      display: grid;
+      grid-template-columns: 1.5rem 1fr;
+      align-items: start;
+      gap: .55rem;
+      color: var(--muted);
+      font-size: .92rem;
+      line-height: 1.45;
+    }
+    .discussion-number { color: var(--accent); font-weight: 800; }
+    .discussion-question { display: flex; flex-direction: column; gap: .2rem; }
+    .discussion-pages { color: var(--muted); font-size: .72rem; font-weight: 700; }
+    .bullet-list { padding-left: 1.25rem; }
+    .bullet-list li { margin: .55rem 0; padding-left: .25rem; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.5rem; }
+    .tag { padding: .5rem .75rem; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: .85rem; }
+    .question { color: var(--accent); font-size: clamp(1.3rem, 3vw, 2rem); line-height: 1.35; }
+    .small-note { margin-top: 1rem; color: var(--muted); font-size: .9rem; }
+    .reference-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .75rem;
+      margin: 1.2rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .reference-list li { padding: .85rem 1rem; border: 1px solid var(--line); border-radius: .8rem; color: var(--muted); font-size: .88rem; line-height: 1.5; }
+    .reference-list a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .agenda-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: .75rem;
+      margin: 1rem 0 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: agenda;
+    }
+    .agenda-list li {
+      display: flex;
+      min-height: 4.1rem;
+      align-items: center;
+      gap: .7rem;
+      padding: .8rem;
+      border: 1px solid var(--line);
+      border-radius: .8rem;
+      color: var(--text);
+      background: rgba(255, 255, 255, .035);
+      line-height: 1.35;
+      counter-increment: agenda;
+    }
+    .agenda-list li::before {
+      content: counter(agenda, decimal-leading-zero);
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 800;
+    }
+    .agenda-entry { display: flex; flex-direction: column; gap: .3rem; }
+    .agenda-pages { color: var(--muted); font-size: .72rem; }
+
+    .controls { border-top: 1px solid var(--line); }
+    .control-group { display: flex; align-items: center; gap: .65rem; }
+    .button {
+      min-height: 2.7rem;
+      padding: .65rem 1rem;
+      border: 1px solid var(--line);
+      border-radius: .75rem;
+      color: var(--text);
+      background: var(--panel);
+      cursor: pointer;
+      transition: background .2s, transform .2s, border-color .2s;
+    }
+    .button:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--accent); background: var(--panel-light); }
+    .button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .button:disabled { opacity: .42; cursor: not-allowed; }
+    .button.primary { border-color: transparent; color: var(--bg); background: var(--accent); font-weight: 800; }
+    .progress { position: absolute; inset: 0 0 auto; height: 4px; background: rgba(255, 255, 255, .07); }
+    .progress span { display: block; width: 0; height: 100%; background: var(--accent); transition: width .25s ease; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+
+    @media (max-width: 650px) {
+      .top-hint { display: none; }
+      .intro-layout { grid-template-columns: 1fr; }
+      .discussion-preview { padding: .9rem; }
+      .timeline { margin-top: .25rem; }
+      .timeline-item { padding: 0 .1rem; font-size: .65rem; }
+      .timeline-marker { width: 1.3rem; height: 1.3rem; }
+      .timeline-line, .timeline-progress { top: .62rem; }
+      .grid { grid-template-columns: 1fr; gap: .7rem; }
+      .reference-list { grid-template-columns: 1fr; gap: .5rem; }
+      .reference-list li { padding: .7rem .85rem; font-size: .82rem; }
+      .agenda-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+      .agenda-list li { min-height: 3.6rem; padding: .65rem; font-size: .88rem; }
+      .card { padding: 1rem; }
+      .slide { height: 100%; padding: 1.5rem; }
+      .deck { height: 68vh; border-radius: 1rem; }
+      .controls { padding: .8rem 1rem; }
+      .button { padding: .6rem .75rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">13</span><span>MODULE 13 · FUTURE OF WORK</span></div>
+      <div class="top-hint">Use ← → arrow keys to navigate</div>
+      <nav class="timeline" id="timeline" aria-label="Presentation timeline">
+        <span class="timeline-line" aria-hidden="true"></span>
+        <span class="timeline-progress" id="timelineProgress" aria-hidden="true"></span>
+        <button class="timeline-item" type="button" data-start-slide="0" aria-label="Go to Introduction, slides 1 to 3">
+          <span class="timeline-marker" aria-hidden="true">1</span><span class="timeline-label">Introduction</span>
+        </button>
+        <button class="timeline-item" type="button" data-start-slide="3" aria-label="Go to AI and automation, slides 4 to 7">
+          <span class="timeline-marker" aria-hidden="true">2</span><span class="timeline-label">AI &amp; automation</span>
+        </button>
+        <button class="timeline-item" type="button" data-start-slide="7" aria-label="Go to working with AI, slides 8 to 9">
+          <span class="timeline-marker" aria-hidden="true">3</span><span class="timeline-label">Working with AI</span>
+        </button>
+        <button class="timeline-item" type="button" data-start-slide="9" aria-label="Go to the future of work, slides 10 to 16">
+          <span class="timeline-marker" aria-hidden="true">4</span><span class="timeline-label">Future of work</span>
+        </button>
+        <button class="timeline-item" type="button" data-start-slide="16" aria-label="Go to ethics and discussion, slides 17 to 23">
+          <span class="timeline-marker" aria-hidden="true">5</span><span class="timeline-label">Ethics &amp; discussion</span>
+        </button>
+      </nav>
+    </header>
+
+    <main>
+      <div class="deck" aria-label="Presentation slides">
+        <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+
+        <section class="slide active" aria-label="Slide 1: Title">
+          <p class="eyebrow">Technology · People · Possibility</p>
+          <h1>AI, Automation &amp; the Future of Work</h1>
+          <p class="lead">Let’s look at how AI and automation are changing school, work, and the skills people need.</p>
+          <p class="presenter">Presented by <strong>Richard M. Bracero</strong></p>
+          <div class="tag-row"><span class="tag">MODULE 13</span><span class="tag">Artificial Intelligence, Automation, and the Future of Work</span></div>
+        </section>
+
+        <section class="slide" aria-label="Slide 2: Presentation roadmap">
+          <p class="eyebrow">What we’ll talk about</p>
+          <h2>Here’s what we’ll cover</h2>
+          <p class="lead">First, we’ll look at how AI and automation are used. Then we’ll talk about jobs, skills, and how to use AI responsibly.</p>
+          <ol class="agenda-list">
+            <li><span class="agenda-entry"><span>AI in schools</span><span class="agenda-pages">Slides 04, 16 &amp; 20</span></span></li>
+            <li><span class="agenda-entry"><span>AI at work</span><span class="agenda-pages">Slide 05</span></span></li>
+            <li><span class="agenda-entry"><span>Automation</span><span class="agenda-pages">Slide 06</span></span></li>
+            <li><span class="agenda-entry"><span>Robotics</span><span class="agenda-pages">Slide 07</span></span></li>
+            <li><span class="agenda-entry"><span>People working with AI</span><span class="agenda-pages">Slide 08</span></span></li>
+            <li><span class="agenda-entry"><span>Using AI to help make decisions</span><span class="agenda-pages">Slide 09</span></span></li>
+            <li><span class="agenda-entry"><span>Learning new skills</span><span class="agenda-pages">Slide 10</span></span></li>
+            <li><span class="agenda-entry"><span>Jobs in the future</span><span class="agenda-pages">Slides 11–15</span></span></li>
+            <li><span class="agenda-entry"><span>Using AI responsibly</span><span class="agenda-pages">Slide 17</span></span></li>
+          </ol>
+        </section>
+
+        <section class="slide" aria-label="Slide 3: The big idea">
+          <p class="eyebrow">The big idea</p>
+          <h2>Technology can change jobs, not just remove them.</h2>
+          <p class="lead">AI is technology that can do things like understand language, find patterns, or make predictions. Automation means using technology to do tasks with less human help. What happens depends on which tasks change and how people change the way they work.</p>
+          <div class="intro-layout">
+            <div class="intro-explanation">
+              <div class="example"><strong>For example:</strong> AI drafts replies to common customer questions. A worker checks each reply before sending it.</div>
+              <div class="callout"><strong>One thing to remember:</strong> AI is what the technology can do. Automation is how it does a task. They can be used together, but not every automated task uses AI, and AI doesn’t always do the task by itself.</div>
+            </div>
+            <aside class="discussion-preview" aria-label="Discussion topics">
+              <h3>Discussion Topics</h3>
+              <ol class="discussion-list">
+                <li><span class="discussion-number">1</span><span class="discussion-question"><span>Will AI replace or augment human workers?</span><span class="discussion-pages">See slide 18</span></span></li>
+                <li><span class="discussion-number">2</span><span class="discussion-question"><span>What skills will remain uniquely valuable to humans?</span><span class="discussion-pages">See slide 19</span></span></li>
+                <li><span class="discussion-number">3</span><span class="discussion-question"><span>How should education respond to AI?</span><span class="discussion-pages">See slide 20</span></span></li>
+                <li><span class="discussion-number">4</span><span class="discussion-question"><span>How can organizations prepare employees for automation?</span><span class="discussion-pages">See slide 21</span></span></li>
+              </ol>
+            </aside>
+          </div>
+        </section>
+
+        <section class="slide" aria-label="Slide 4: AI and education">
+          <p class="eyebrow">02 · AI in schools</p>
+          <h2>AI can help students, but teachers still matter.</h2>
+          <p class="lead">AI tools can give students practice, language help, and feedback. But they work best when they support what students need to learn, are easy to use, and are checked by a teacher. Student information also needs to stay private.</p>
+          <div class="example"><strong>For example:</strong> A teacher sees that a student is having trouble with fractions. They use that information to choose extra practice that fits the student's needs.</div>
+          <div class="callout"><strong>Remember:</strong> Check AI-made materials, keep student information private, and be clear about when AI is allowed. Make sure students understand the work themselves.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 5: AI in the workplace">
+          <p class="eyebrow">03 · AI at work</p>
+          <h2>AI should fit the job it is used for.</h2>
+          <p class="lead">At work, AI can sort requests, sum up documents, write a first draft, or find patterns in information. It works better when the information is good and people know how to check its answers. Privacy matters too.</p>
+          <div class="example"><strong>For example:</strong> AI writes a first draft of meeting notes and a to-do list. The meeting leader checks the notes, adds any missing details, and makes sure each task has an owner and a deadline.</div>
+          <div class="callout"><strong>Remember:</strong> Treat AI's answer as a draft. Check it, and don't use it instead of your own professional judgment.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 6: Automation">
+          <p class="eyebrow">04 · Automation</p>
+          <h2>Let technology do routine tasks, but plan for problems.</h2>
+          <p class="lead">Automation follows set steps to do a task. This can make work faster and more consistent, but it may not know what to do when something unusual happens. Automation can use AI, but it doesn't have to.</p>
+          <div class="example"><strong>For example:</strong> When someone buys an item online, the system sends a receipt, updates the stock count, and lets the store know when it is time to order more.</div>
+          <div class="callout"><strong>Before you automate:</strong> Make sure the process works well first. Decide who will check for problems and fix them if something goes wrong.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 7: Robotics">
+          <p class="eyebrow">05 · Robots</p>
+          <h2>Robots can do tasks in the real world.</h2>
+          <p class="lead">Robots use machines, sensors, and software to move or respond to things around them. Some follow the same set of steps every time. Others use AI to respond to changes.</p>
+          <div class="example"><strong>For example:</strong> Robots move boxes around a warehouse. Workers keep things safe, look after the robots, and handle tasks that need a person.</div>
+          <div class="callout"><strong>Remember:</strong> A robot doesn't have to use AI. People still need clear safety rules, and a way to stop the robot if there's a problem.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 8: Human-AI collaboration">
+          <p class="eyebrow">06 · People working with AI</p>
+          <h2>People and AI can do different parts of a job.</h2>
+          <p class="lead">AI can search through lots of information and find patterns. People can add context, make decisions, and take responsibility. We need to choose carefully which tasks go to AI and which stay with people.</p>
+          <div class="example"><strong>For example:</strong> AI sorts a lot of public comments into groups. A worker checks that the groups make sense and that different people's views are represented fairly.</div>
+          <div class="tag-row"><span class="tag">AI: handles lots of information</span><span class="tag">People: add context and check</span><span class="tag">Together: better results</span></div>
+        </section>
+
+        <section class="slide" aria-label="Slide 9: AI-assisted decision-making">
+          <p class="eyebrow">07 · AI can help with decisions</p>
+          <h2>People should still be responsible for important decisions.</h2>
+          <p class="lead">AI can offer a suggestion, but it may be wrong or miss important details. People checking the answer need enough time, knowledge, and authority to question it.</p>
+          <div class="example"><strong>For example:</strong> A computer system points out which patients may need follow-up. A doctor checks the information and decides what is best for each patient.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 10: Reskilling and upskilling">
+          <p class="eyebrow">08 · Learning new skills</p>
+          <h2>People can learn more for their job, or train for a new one.</h2>
+          <p class="lead"><strong>Upskilling</strong> means learning more skills for the job you already have. <strong>Reskilling</strong> means learning skills for a different kind of job. Good training should lead to real job opportunities.</p>
+          <div class="example"><strong>For example:</strong> A store worker learns to use inventory data in their current job. That's upskilling. If they train for a different job in tech support, that's reskilling.</div>
+          <div class="tag-row"><span class="tag">Digital literacy</span><span class="tag">Communication</span><span class="tag">Problem-solving</span><span class="tag">Adaptability</span></div>
+        </section>
+
+        <section class="slide" aria-label="Slide 11: Future employment">
+          <p class="eyebrow">09 · Jobs in the future</p>
+          <h2>AI can change jobs in different ways.</h2>
+          <p class="lead">Technology can take over some tasks, help people with others, and create new tasks. The effect on jobs depends on what customers need and how employers change the work. Different workers and communities may be affected in different ways.</p>
+          <div class="example"><strong>For example:</strong> Accounting software can do some data entry. Accountants may spend more time checking unusual cases, reading reports, and helping clients. It depends on how the employer changes the job.</div>
+          <div class="callout"><strong>One thing to remember:</strong> Look at how many jobs there are, what those jobs are like, and how hard it is for workers to move to a new job. These can have different answers.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 12: A task-based view">
+          <p class="eyebrow">A closer look · Tasks, not job titles</p>
+          <h2>A task could change without a whole job going away.</h2>
+          <p class="lead">Most jobs are made up of many tasks. AI might be able to do one task, but that doesn't mean a company will use it or remove the job. Cost, safety, rules, and people's choices all matter.</p>
+          <div class="example"><strong>For example:</strong> Software can enter routine transactions, while accountants still handle unusual cases and give advice. The job changes, but what happens to jobs depends on what the company needs and decides.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 13: Productivity and distribution">
+          <p class="eyebrow">A closer look · Productivity and who benefits</p>
+          <h2>More work done doesn't mean everyone benefits.</h2>
+          <p class="lead">Automation can do some tasks and help people with others. It may also lower costs or create new work. But that doesn't guarantee more jobs or better pay. It matters who owns the technology, who makes decisions, and how the gains are shared.</p>
+          <div class="example"><strong>For example:</strong> AI may help a team serve more clients. The company could improve service and pay, serve more people without changing pay, or cut jobs. The result depends on the choices the company makes.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 14: Job quality and algorithmic management">
+          <p class="eyebrow">A closer look · What work is like</p>
+          <h2>Faster work isn't always better work.</h2>
+          <p class="lead">Some companies use computer systems to give out work and track how people do it. This can help organize work, but unclear rules can make work harder or unfair. Good jobs also need to be safe and fair, and workers should be able to speak up.</p>
+          <div class="example"><strong>For example:</strong> A delivery app may help drivers find routes faster. Drivers still need safe routes, clear rules, and a fair way to explain a delay or challenge a wrong rating.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 15: Organizational adoption">
+          <p class="eyebrow">A closer look · Changing how a company works</p>
+          <h2>Adding AI means changing the way work is done.</h2>
+          <p class="lead">Buying AI software isn't enough. Workers need good tools, training, and clear rules. If the system doesn't fit the job, people may spend more time checking mistakes or have less say in their work.</p>
+          <div class="example"><strong>For example:</strong> Before a hospital starts using AI to write notes, it checks that the tool saves doctors time, doesn't make them do more corrections, and keeps patient information private.</div>
+          <div class="callout"><strong>A good way to start:</strong> Check how things work now. Try the tool with workers, see what goes well and what doesn't, make changes, and keep a backup plan.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 16: Education and AI literacy">
+          <p class="eyebrow">A closer look · Learning about AI</p>
+          <h2>Students need to know their subject and how to check AI.</h2>
+          <p class="lead">Being AI-smart means knowing what AI can and can't do, checking its answers, keeping information safe, and being honest about using it. Students need to know their subject so they can spot answers that sound right but are wrong.</p>
+          <div class="example"><strong>For example:</strong> Students use AI to plan an essay, check its ideas against their readings, and explain what they changed. They also show that they understand their own ideas.</div>
+          <div class="callout"><strong>Keep it fair:</strong> Make the rules clear and give students the help and access they need. (UNESCO, 2023)</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 17: Ethical challenges">
+          <p class="eyebrow">10 · Using AI responsibly</p>
+          <h2>We need to keep checking AI for problems.</h2>
+          <p class="lead">AI can cause problems because of the information it uses, the way it is built, or how people use it. Before and after using a system, we should think about who could be affected, check for harm, and decide who is responsible.</p>
+          <div class="grid">
+            <div class="card"><h3>Fairness</h3><p>Check that the system doesn't treat groups of people unfairly.</p></div>
+            <div class="card"><h3>Privacy</h3><p>Only collect the information that's needed, and keep it safe.</p></div>
+            <div class="card"><h3>Responsibility</h3><p>Decide who is in charge, check how the system works, and fix problems.</p></div>
+            <div class="card"><h3>Clear information</h3><p>Explain what the system can and can't do, and how it affects decisions.</p></div>
+          </div>
+          <div class="example"><strong>For example:</strong> A company checks that its hiring system is fair, uses only the information it needs, tells applicants how AI is used, and lets a person review or challenge a decision.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 18: Discussion">
+          <p class="eyebrow">Let’s talk · Question 1 of 4</p>
+          <h2>Will AI take people's jobs or help them?</h2>
+          <p class="lead">AI may do some tasks, help with others, and change what workers do. What happens depends on the kind of AI, the choices a company makes, and how much time passes.</p>
+          <div class="example"><strong>Let’s discuss:</strong> Should a company use AI mainly to save money, or to make work and service better? How can we tell if workers are benefiting too? We can look at pay, workload, job security, and whether workers get a say.</div>
+          <div class="small-note">AI being able to do a task, a company choosing to use it, and jobs actually changing are three different things.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 19: Human skills">
+          <p class="eyebrow">Let’s talk · Question 2 of 4</p>
+          <h2>What can people do well when working with AI?</h2>
+          <p class="lead">There may not be one skill that only people can do in every situation. But people bring experience, good judgment, care, and the ability to understand what is happening around them. AI may change how these skills are used.</p>
+          <div class="example"><strong>For example:</strong> A customer-service worker listens to a difficult complaint, finds a fair solution, and helps the customer feel heard. They also need to notice when an AI answer is wrong or doesn't fit.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 20: Education and AI">
+          <p class="eyebrow">Let’s talk · Question 3 of 4</p>
+          <h2>What should schools do about AI?</h2>
+          <p class="lead">Schools need to help students learn their subjects and use AI wisely. They should make the rules clear, protect students' information, and give students work that shows how they think—not just the final answer.</p>
+          <div class="example"><strong>For example:</strong> Students explain how they checked AI's ideas and what they changed. Then they use what they learned to solve a new problem without AI.</div>
+          <div class="small-note">The rules may be different for different ages, subjects, and kinds of schoolwork.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 21: Preparing employees">
+          <p class="eyebrow">Let’s talk · Question 4 of 4</p>
+          <h2>How can companies help workers get ready?</h2>
+          <p class="lead">Workers shouldn't have to figure everything out on their own. Companies can ask workers what they need, offer paid training, explain how AI affects decisions, and help people move into new jobs if needed.</p>
+          <div class="example"><strong>For example:</strong> Before using AI to make staff schedules, a company tries it with workers, gives them training, checks that the schedules are fair, and makes it easy to report mistakes.</div>
+        </section>
+
+        <section class="slide" aria-label="Slide 22: Selected readings">
+          <p class="eyebrow">If you want to learn more</p>
+          <h2>More to read</h2>
+          <p class="lead">These readings look at how AI may change tasks, jobs, education, and the way we use AI. Remember, estimates show what could happen, not exactly how many jobs will be lost.</p>
+          <ul class="reference-list">
+            <li>Autor, D. H. (2015). “Why Are There Still So Many Jobs? The History and Future of Workplace Automation.” <em>Journal of Economic Perspectives, 29</em>(3), 3–30. <a href="https://doi.org/10.1257/jep.29.3.3" target="_blank" rel="noopener noreferrer">doi:10.1257/jep.29.3.3</a></li>
+            <li>Gmyrek, P., Berg, J., &amp; Bescond, D. (2023). <em>Generative AI and Jobs: A global analysis of potential effects on job quantity and quality.</em> ILO Working Paper 96. <a href="https://doi.org/10.54394/FHEM8239" target="_blank" rel="noopener noreferrer">doi:10.54394/FHEM8239</a></li>
+            <li>OECD. (2023). <em>OECD Employment Outlook 2023: Artificial Intelligence and the Labour Market.</em> <a href="https://doi.org/10.1787/08785bba-en" target="_blank" rel="noopener noreferrer">doi:10.1787/08785bba-en</a></li>
+            <li>UNESCO. (2023). <em>Guidance for generative AI in education and research.</em> <a href="https://unesdoc.unesco.org/ark:/48223/pf0000386693" target="_blank" rel="noopener noreferrer">UNESCO Digital Library</a></li>
+            <li>Tabassi, E. (2023). <em>Artificial Intelligence Risk Management Framework (AI RMF 1.0).</em> NIST AI 100-1. <a href="https://doi.org/10.6028/NIST.AI.100-1" target="_blank" rel="noopener noreferrer">doi:10.6028/NIST.AI.100-1</a></li>
+          </ul>
+        </section>
+
+        <section class="slide" aria-label="Slide 23: Conclusion">
+          <p class="eyebrow">To wrap up</p>
+          <h2>We all have a say in how work changes.</h2>
+          <p class="lead">AI is powerful, but we must remember three important things. First, we should use AI carefully because it can make mistakes. Second, when companies use AI to replace or change certain jobs, they should also help workers learn new skills. Lastly, humans must remain responsible for the decisions and actions involving AI. We should not blame everything on technology.</p>
+          <div class="callout"><strong>The main lesson:</strong> AI should make our lives and work better, but it should never remove human responsibility, fairness, and good judgment.</div>
+          <p class="presenter">Thanks for listening · <strong>Richard M. Bracero</strong></p>
+        </section>
+      </div>
+    </main>
+
+    <footer class="controls">
+      <div class="counter" id="counter" aria-live="polite">01 / 23</div>
+      <div class="control-group">
+        <button class="button" id="prev" type="button" aria-label="Previous slide">← <span>Previous</span></button>
+        <button class="button primary" id="next" type="button" aria-label="Next slide"><span>Next</span> →</button>
+      </div>
+    </footer>
+    <p class="sr-only" id="announcement" aria-live="polite"></p>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const previousButton = document.getElementById("prev");
+    const nextButton = document.getElementById("next");
+    const counter = document.getElementById("counter");
+    const progressBar = document.getElementById("progressBar");
+    const timelineProgress = document.getElementById("timelineProgress");
+    const timelineItems = Array.from(document.querySelectorAll(".timeline-item"));
+    const announcement = document.getElementById("announcement");
+    let currentSlide = 0;
+
+    function showSlide(index) {
+      currentSlide = Math.max(0, Math.min(index, slides.length - 1));
+      slides.forEach((slide, slideIndex) => {
+        slide.classList.toggle("active", slideIndex === currentSlide);
+        slide.setAttribute("aria-hidden", String(slideIndex !== currentSlide));
+      });
+
+      const current = String(currentSlide + 1).padStart(2, "0");
+      const total = String(slides.length).padStart(2, "0");
+      counter.textContent = `${current} / ${total}`;
+      progressBar.style.width = `${((currentSlide + 1) / slides.length) * 100}%`;
+      const currentSection = timelineItems.reduce(
+        (sectionIndex, item, index) => Number(item.dataset.startSlide) <= currentSlide ? index : sectionIndex,
+        0
+      );
+      timelineItems.forEach((item, sectionIndex) => {
+        const isCurrent = sectionIndex === currentSection;
+        item.classList.toggle("completed", sectionIndex < currentSection);
+        item.setAttribute("aria-current", isCurrent ? "step" : "false");
+        item.querySelector(".timeline-marker").textContent = sectionIndex < currentSection ? "✓" : String(sectionIndex + 1);
+      });
+      timelineProgress.style.width = `${(currentSection / (timelineItems.length - 1)) * 80}%`;
+      previousButton.disabled = currentSlide === 0;
+      nextButton.disabled = currentSlide === slides.length - 1;
+      announcement.textContent = `Slide ${currentSlide + 1} of ${slides.length}: ${slides[currentSlide].getAttribute("aria-label").replace(/^Slide \d+: /, "")}`;
+    }
+
+    previousButton.addEventListener("click", () => showSlide(currentSlide - 1));
+    nextButton.addEventListener("click", () => showSlide(currentSlide + 1));
+    timelineItems.forEach((item) => {
+      item.addEventListener("click", () => showSlide(Number(item.dataset.startSlide)));
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
+        event.preventDefault();
+        showSlide(currentSlide + 1);
+      } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
+        event.preventDefault();
+        showSlide(currentSlide - 1);
+      } else if (event.key === "Home") {
+        showSlide(0);
+      } else if (event.key === "End") {
+        showSlide(slides.length - 1);
+      }
+    });
+
+    showSlide(0);
+  </script>
+</body>
+</html>
